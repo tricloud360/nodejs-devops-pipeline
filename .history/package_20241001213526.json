@@ -12,9 +12,5 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.0"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "supertest": "^7.0.0"
   }
 }
