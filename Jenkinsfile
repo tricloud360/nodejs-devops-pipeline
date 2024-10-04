@@ -4,6 +4,7 @@ pipeline {
     environment {
         PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
         APP_NAME = "nodejs-devops-pipeline"
+        APP_VERSION = sh(script: "node -p \"require('./package.json').version\"", returnStdout: true).trim()
     }
 
     stages {
@@ -16,9 +17,7 @@ pipeline {
                         sh 'node -v || echo "Node version command failed"'
                         sh 'which npm || echo "npm not found"'
                         sh 'npm -v || echo "npm version command failed"'
-                        
-                        def packageJson = readJSON file: 'package.json'
-                        env.APP_VERSION = packageJson.version
+                        echo "Application version: ${env.APP_VERSION}"
                     } catch (Exception e) {
                         echo "Error in Setup stage: ${e.getMessage()}"
                         currentBuild.result = 'FAILURE'
