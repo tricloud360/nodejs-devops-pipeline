@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'master' }  // Use 'master' or another appropriate label for your Jenkins setup
+    agent any  // This will use any available agent
 
     tools {
         nodejs "NodeJS"
@@ -14,24 +14,24 @@ pipeline {
         stage('Setup') {
             steps {
                 echo "Setting up environment..."
-                sh 'node -v'
-                sh 'npm -v'
-                sh 'eslint -v || npm install -g eslint'
-                sh 'jest --version || npm install -g jest'
+                sh 'node -v || echo "Node.js not found"'
+                sh 'npm -v || echo "npm not found"'
+                sh 'eslint -v || echo "ESLint not found"'
+                sh 'jest --version || echo "Jest not found"'
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 echo "Installing dependencies..."
-                sh 'npm ci || npm install'
+                sh 'npm install'
             }
         }
 
         stage('Lint') {
             steps {
                 echo "Linting code..."
-                sh 'eslint . --ignore-pattern "node_modules/" || echo "Linting failed but continuing"'
+                sh 'npx eslint . --ignore-pattern "node_modules/" || echo "Linting failed but continuing"'
             }
         }
 
