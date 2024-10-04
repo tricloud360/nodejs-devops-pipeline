@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs "NodeJS" // Use the name you gave to the NodeJS installation
+        nodejs "NodeJS"
     }
 
     stages {
@@ -26,17 +26,17 @@ pipeline {
         }
         stage('Code Quality Analysis') {
             steps {
-                sh 'eslint .'
+                sh 'eslint . --ignore-pattern "node_modules/"'
             }
         }
         stage('Deploy to Staging') {
             steps {
-                echo 'Deploying to staging environment' // We'll implement this later
+                echo 'Deploying to staging environment'
             }
         }
         stage('Deploy to Production') {
             steps {
-                echo 'Deploying to production environment' // We'll implement this later
+                echo 'Deploying to production environment'
             }
         }
     }
