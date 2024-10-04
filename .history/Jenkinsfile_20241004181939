@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+
+    environment {
+        NVM_DIR = "/Users/sam/.nvm"
+        NODE_VERSION = "22.9.0"
+        APP_NAME = "nodejs-devops-pipeline"
+        APP_VERSION = "1.0.0"
+        DOCKER_IMAGE = "nodejs-app:${APP_VERSION}"
+    }
+
+    stages {
+        stage('Environment Setup') {
+            steps {
+                script {
+                    sh """
+                        export NVM_DIR="${NVM_DIR}"
+                        [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+                        nvm use ${NODE_VERSION} || nvm use node
+                        node -v
+                        npm -v
+                    """
+                }
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+                    nvm use ${NODE_VERSION} || nvm use node
+                    npm ci || npm install
+                """
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+                    nvm use ${NODE_VERSION} || nvm use node
+                    npm run build
+                """
+                // Create a Docker image as the build artifact
+                sh "docker build -t ${DOCKER_IMAGE} ."
+            }
+        }
+
+        // ... (rest of the stages remain the same)
+    }
+
+    // ... (post actions remain the same)
+}

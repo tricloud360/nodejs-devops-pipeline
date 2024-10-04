@@ -1,0 +1,22 @@
+{
+  "name": "nodejs-devops-pipeline",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "build": "echo 'Building project...' && node -e \"console.log('Build completed!')\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}

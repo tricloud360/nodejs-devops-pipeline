@@ -1,0 +1,27 @@
+{
+  "name": "nodejs-devops-pipeline",
+  "version": "1.0.0",
+  "description": "A Node.js application with DevOps pipeline",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'Building...' && npm install",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "nodejs",
+    "devops",
+    "pipeline"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "jest": "^27.0.6",
+    "supertest": "^6.1.3",
+    "eslint": "^7.32.0"
+  }
+}

@@ -7,7 +7,6 @@ pipeline {
         APP_NAME = "nodejs-devops-pipeline"
         APP_VERSION = "1.0.0"
         DOCKER_IMAGE = "${APP_NAME}:${APP_VERSION}"
-        PATH = "/usr/local/bin:${env.PATH}"
     }
 
     stages {
@@ -15,19 +14,18 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo "PATH: ${PATH}"
-                        echo "Current user: \$(whoami)"
-                        echo "Home directory: \$HOME"
-                        which docker || echo "Docker not found in PATH"
-                        docker --version || echo "Docker CLI not working"
-                        docker info || echo "Docker daemon not accessible"
-                        
                         export NVM_DIR="${NVM_DIR}"
                         [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
                         nvm use ${NODE_VERSION} || nvm use node
                         node -v
                         npm -v
                     """
+                    
+                    // Verify Docker is available
+                    sh '''
+                        docker --version
+                        docker info
+                    '''
                 }
             }
         }
@@ -43,11 +41,14 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Lint') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKER_IMAGE} ."
-                }
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+                    nvm use ${NODE_VERSION} || nvm use node
+                    npm run lint
+                """
             }
         }
 
@@ -59,6 +60,14 @@ pipeline {
                     nvm use ${NODE_VERSION} || nvm use node
                     npm test
                 """
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                }
             }
         }
 
@@ -101,4 +110,3 @@ pipeline {
         }
     }
 }
-// Path: Dockerfile
