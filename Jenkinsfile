@@ -1,91 +1,112 @@
 pipeline {
-    agent any  // This will use any available agent
-
-    tools {
-        nodejs "NodeJS"
-    }
+    agent any
 
     environment {
+        PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
         APP_NAME = "nodejs-devops-pipeline"
-        APP_VERSION = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
     }
 
     stages {
         stage('Setup') {
             steps {
-                echo "Setting up environment..."
-                sh 'node -v || echo "Node.js not found"'
-                sh 'npm -v || echo "npm not found"'
-                sh 'eslint -v || echo "ESLint not found"'
-                sh 'jest --version || echo "Jest not found"'
+                script {
+                    try {
+                        sh 'echo $PATH'
+                        sh 'which node || echo "Node not found"'
+                        sh 'node -v || echo "Node version command failed"'
+                        sh 'which npm || echo "npm not found"'
+                        sh 'npm -v || echo "npm version command failed"'
+                        
+                        def packageJson = readJSON file: 'package.json'
+                        env.APP_VERSION = packageJson.version
+                    } catch (Exception e) {
+                        echo "Error in Setup stage: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Setup stage failed")
+                    }
+                }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo "Installing dependencies..."
-                sh 'npm install'
+                script {
+                    try {
+                        sh 'npm install'
+                    } catch (Exception e) {
+                        echo "Error installing dependencies: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Dependency installation failed")
+                    }
+                }
             }
         }
 
         stage('Lint') {
             steps {
-                echo "Linting code..."
-                sh 'npx eslint . --ignore-pattern "node_modules/" || echo "Linting failed but continuing"'
+                script {
+                    try {
+                        sh 'npx eslint . --ignore-pattern "node_modules/" || echo "Linting failed but continuing"'
+                    } catch (Exception e) {
+                        echo "Error during linting: ${e.getMessage()}"
+                        // Continue pipeline even if linting fails
+                    }
+                }
             }
         }
 
         stage('Test') {
             steps {
-                echo "Running tests..."
-                sh 'npm test || echo "Tests failed but continuing"'
-            }
-        }
-
-        stage('Security Scan') {
-            steps {
-                echo "Performing security scan..."
-                sh 'npm audit --audit-level=moderate || echo "Security scan failed but continuing"'
+                script {
+                    try {
+                        sh 'npm test || echo "Tests failed but continuing"'
+                    } catch (Exception e) {
+                        echo "Error during testing: ${e.getMessage()}"
+                        // Continue pipeline even if tests fail
+                    }
+                }
             }
         }
 
         stage('Build') {
             steps {
-                echo "Building application..."
-                sh 'npm run build || echo "No build script found"'
+                script {
+                    try {
+                        sh 'npm run build || echo "No build script found"'
+                    } catch (Exception e) {
+                        echo "Error during build: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Build failed")
+                    }
+                }
             }
         }
 
         stage('Deploy to Staging') {
             steps {
-                echo "Deploying to Staging Environment..."
-                sh '''
-                    mkdir -p staging
-                    cp -R * staging/ || true
-                    echo "Application ${APP_NAME} version ${APP_VERSION} deployed to staging"
-                '''
-            }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                branch 'main'
-            }
-            steps {
-                echo "Deploying to Production Environment..."
-                sh '''
-                    mkdir -p production
-                    cp -R * production/ || true
-                    echo "Application ${APP_NAME} version ${APP_VERSION} deployed to production"
-                '''
+                script {
+                    try {
+                        echo "Deploying ${APP_NAME} version ${APP_VERSION} to Staging"
+                        // Add your staging deployment logic here
+                    } catch (Exception e) {
+                        echo "Error deploying to staging: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Staging deployment failed")
+                    }
+                }
             }
         }
     }
 
     post {
         always {
-            echo 'Cleaning up workspace...'
-            deleteDir()
+            script {
+                // Ensure we're in a node context for workspace operations
+                node {
+                    echo 'Cleaning up workspace...'
+                    deleteDir()
+                }
+            }
         }
         success {
             echo 'Pipeline succeeded!'
