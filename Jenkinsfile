@@ -13,21 +13,21 @@ pipeline {
             steps {
                 script {
                     // Source nvm and use the specified Node version
-                    sh '''
-                        export NVM_DIR="$NVM_DIR"
-                        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+                    sh """
+                        export NVM_DIR="${NVM_DIR}"
+                        [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"  # This loads nvm
                         nvm use ${NODE_VERSION}
                         node -v
                         npm -v
-                    '''
+                    """
                     
-                    def nodeVersion = sh(script: "node -v", returnStdout: true).trim()
+                    def nodeVersion = sh(script: "bash -c 'source $NVM_DIR/nvm.sh && nvm use ${NODE_VERSION} && node -v'", returnStdout: true).trim()
                     echo "Current Node.js version: ${nodeVersion}"
                     
-                    def npmVersion = sh(script: "npm -v", returnStdout: true).trim()
+                    def npmVersion = sh(script: "bash -c 'source $NVM_DIR/nvm.sh && nvm use ${NODE_VERSION} && npm -v'", returnStdout: true).trim()
                     echo "npm version: ${npmVersion}"
                     
-                    env.APP_VERSION = sh(script: "node -p \"require('./package.json').version\"", returnStdout: true).trim()
+                    env.APP_VERSION = sh(script: "bash -c 'source $NVM_DIR/nvm.sh && nvm use ${NODE_VERSION} && node -p \"require(\\\"./package.json\\\").version\"'", returnStdout: true).trim()
                     echo "Application version: ${env.APP_VERSION}"
                 }
             }
@@ -35,12 +35,12 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    export NVM_DIR="$NVM_DIR"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
                     nvm use ${NODE_VERSION}
                     npm ci || npm install
-                '''
+                """
             }
         }
 
@@ -48,22 +48,22 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh '''
-                            export NVM_DIR="$NVM_DIR"
-                            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+                        sh """
+                            export NVM_DIR="${NVM_DIR}"
+                            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
                             nvm use ${NODE_VERSION}
                             npx eslint . --ignore-pattern "node_modules/"
-                        '''
+                        """
                     } catch (Exception e) {
                         echo "Linting failed: ${e.message}"
                         echo "Updating ESLint configuration..."
-                        sh '''
-                            export NVM_DIR="$NVM_DIR"
-                            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+                        sh """
+                            export NVM_DIR="${NVM_DIR}"
+                            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
                             nvm use ${NODE_VERSION}
                             sed -i '' 's/"es2021"/"es2020"/g' .eslintrc.js
                             npx eslint . --ignore-pattern "node_modules/"
-                        '''
+                        """
                     }
                 }
             }
@@ -71,12 +71,12 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh '''
-                    export NVM_DIR="$NVM_DIR"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+                sh """
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
                     nvm use ${NODE_VERSION}
                     npm test
-                '''
+                """
             }
         }
 
@@ -84,21 +84,21 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh '''
-                            export NVM_DIR="$NVM_DIR"
-                            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+                        sh """
+                            export NVM_DIR="${NVM_DIR}"
+                            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
                             nvm use ${NODE_VERSION}
                             npm run build
-                        '''
+                        """
                     } catch (Exception e) {
                         echo "No build script found. Adding a default build script..."
-                        sh '''
-                            export NVM_DIR="$NVM_DIR"
-                            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+                        sh """
+                            export NVM_DIR="${NVM_DIR}"
+                            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
                             nvm use ${NODE_VERSION}
-                            echo '"build": "echo \\"Building project...\\" && node -e \\"console.log(\\"Build completed!\\")\\""' >> package.json
+                            echo '\\"build\\": \\"echo \\\\\\"Building project...\\\\\\" && node -e \\\\\\"console.log(\\\\\\\\\\\\\\"Build completed!\\\\\\\\\\\\\\")\\\\\\""' >> package.json
                             npm run build
-                        '''
+                        """
                     }
                 }
             }
